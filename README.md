@@ -8,16 +8,21 @@ How to operate and run Project
 
 
 ```bash
-import os
-from PyQt5 import QtCore, QtGui, QtWidgets
+import matplotlib.pyplot as plt
 import numpy as np
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSlot, QRunnable, QThreadPool
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import matplotlib.pyplot as plt
-from sources.samples import *
-from sklearn.naive_bayes import GaussianNB, BernoulliNB, ComplementNB, MultinomialNB
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from sklearn.metrics import accuracy_score, precision_score
+from sklearn.naive_bayes import GaussianNB, BernoulliNB, ComplementNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+import random
+import threading
+from sources.samples import *
 ```
     
     
