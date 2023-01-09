@@ -11,10 +11,9 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 import random
-import threading
 
-from samples import *
-# from sources.samples import *
+# from samples import *
+from sources.samples import *
 
 
 def resource_path(relative_path):
@@ -698,50 +697,33 @@ class MLP_Tune_Dia(QtWidgets.QDialog):
         activation = ['relu']
         learning_rate_init = [0.001]
         max_iter = [200]
+
         if self.activ_check.isChecked():
             activation = ["identity", "tanh", "relu"]
         if self.checkBox_2.isChecked():
             learning_rate_init = [0.001, 0.01, 0.1]
         if self.checkBox.isChecked():
             max_iter = [200, 250, 300, 350, 400]
+
         all_outs = []
         all_percents = []
         X_test, Y_test, X, Y = self.load_data()
+
         mlp = MLPClassifier()
         mlp.fit(X, Y)
         Y_pred = mlp.predict(X_test)
+
         self.accBefore = round(accuracy_score(Y_test, Y_pred) * 100, 5)
         all_outs.append((('relu', 0.001, 200), self.accBefore))
         all_percents.append(self.accBefore)
-        threads = []
-        def clearThreads(n_jobs=30):
-            if len(threads) >= n_jobs:
-                for idx, thread in enumerate(threads):
-                    if not thread.is_alive():
-                        thread.join()
-                        threads.pop(idx)
-                if len(threads) >= n_jobs:
-                    threads[-1].join()
-                    threads.pop(-1)
-
-        def heavy(activationh, learning_rate_inith, max_iterh):
-            mlp = MLPClassifier(activation=activationh, learning_rate_init=learning_rate_inith, max_iter=max_iterh)
-            mlp.fit(X, Y)
-            Y_pred = mlp.predict(X_test)
-            all_outs.append(((activationh, learning_rate_inith, max_iterh), round(accuracy_score(Y_test, Y_pred) * 100, 5)))
-            all_percents.append(round(accuracy_score(Y_test, Y_pred) * 100, 5))
-
         for activ in activation:
             for learning_rate in learning_rate_init:
                 for epoch in max_iter:
-                    clearThreads(30)
-                    t = threading.Thread(target=heavy, args=(activ, learning_rate, epoch))
-                    threads.append(t)
-                    t.start()
-
-        for thread in threads:
-            thread.join()
-
+                    mlp = MLPClassifier(activation=activ, learning_rate_init=learning_rate, max_iter=epoch)
+                    mlp.fit(X, Y)
+                    Y_pred = mlp.predict(X_test)
+                    all_outs.append(((activ, learning_rate, epoch), round(accuracy_score(Y_test, Y_pred) * 100, 5)))
+                    all_percents.append(round(accuracy_score(Y_test, Y_pred) * 100, 5))
         best_pair = all_outs[all_percents.index(max(all_percents))]
 
         self.accAfter = best_pair[1]
@@ -789,7 +771,7 @@ class MLP_Tune_Dia(QtWidgets.QDialog):
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Dialog", "MLP Tune"))
-        self.label.setText(_translate("Dialog", "MLP HyperParameter Tuning:"))
+        self.label.setText(_translate("Dialog", "Decision Tree HyperParameter Tuning:"))
         self.label_2.setText(_translate("Dialog", "Hyper parameters"))
         self.auto_btn.setText(_translate("Dialog", "Auto Tune"))
         self.graph_btn.setText(_translate("Dialog", "Graph"))
@@ -924,34 +906,13 @@ class SVM_Tune_Dia(QtWidgets.QDialog):
         all_outs.append((('scale', 1), self.accBefore))
         all_percents.append(self.accBefore)
 
-        threads = []
-
-        def clearThreads(n_jobs=30):
-            if len(threads) >= n_jobs:
-                for idx, thread in enumerate(threads):
-                    if not thread.is_alive():
-                        thread.join()
-                        threads.pop(idx)
-                if len(threads) >= n_jobs:
-                    threads[-1].join()
-                    threads.pop(-1)
-
-        def heavy(gammah, ch):
-            svm = SVC(C=ch, gamma=gammah)
-            svm.fit(X, Y)
-            Y_pred = svm.predict(X_test)
-            all_outs.append(((gammah, ch), round(accuracy_score(Y_test, Y_pred) * 100, 5)))
-            all_percents.append(round(accuracy_score(Y_test, Y_pred) * 100, 5))
-
         for g in gamma:
             for c in C:
-                clearThreads(30)
-                t = threading.Thread(target=heavy, args=(g, c))
-                threads.append(t)
-                t.start()
-
-        for thread in threads:
-            thread.join()
+                svm = SVC(C=c, gamma=g)
+                svm.fit(X, Y)
+                Y_pred = svm.predict(X_test)
+                all_outs.append(((g, c), round(accuracy_score(Y_test, Y_pred) * 100, 5)))
+                all_percents.append(round(accuracy_score(Y_test, Y_pred) * 100, 5))
 
         best_pair = all_outs[all_percents.index(max(all_percents))]
         self.accAfter = best_pair[1]
@@ -1182,37 +1143,16 @@ class Decision_Tune_Dia(QtWidgets.QDialog):
         self.accBefore = round(accuracy_score(Y_test, Y_pred) * 100, 5)
         all_outs.append((('gini', None, None, decision), self.accBefore))
         all_percents.append(self.accBefore)
-        threads = []
-
-        def clearThreads(n_jobs=30):
-            if len(threads) >= n_jobs:
-                for idx, thread in enumerate(threads):
-                    if not thread.is_alive():
-                        thread.join()
-                        threads.pop(idx)
-                if len(threads) >= n_jobs:
-                    threads[-1].join()
-                    threads.pop(-1)
-
-        def heavy(criterion, max_depth, max_leaf_nodes):
-            decision = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, max_leaf_nodes=max_leaf_nodes)
-            decision.fit(X, Y)
-            Y_pred = decision.predict(X_test)
-            acc = round(accuracy_score(Y_test, Y_pred) * 100, 5)
-            all_outs.append(((criterion, max_depth, max_leaf_nodes, decision), acc))
-            all_percents.append(acc)
 
         for crit in self.grid_params['criterion']:
             for depth in self.grid_params['max_depth']:
                 for leaf in self.grid_params['max_leaf_nodes']:
-                    clearThreads(30)
-                    t = threading.Thread(target=heavy, args=(crit, depth, leaf))
-                    threads.append(t)
-                    t.start()
-
-        for thread in threads:
-            thread.join()
-
+                    decision = DecisionTreeClassifier(criterion=crit, max_depth=depth, max_leaf_nodes=leaf)
+                    decision.fit(X, Y)
+                    Y_pred = decision.predict(X_test)
+                    acc = round(accuracy_score(Y_test, Y_pred) * 100, 5)
+                    all_outs.append(((crit, depth, leaf, decision), acc))
+                    all_percents.append(acc)
         best_pair = all_outs[all_percents.index(max(all_percents))]
         self.accAfter = best_pair[1]
 
@@ -1254,9 +1194,9 @@ class Decision_Tune_Dia(QtWidgets.QDialog):
                 if self.crit_check.isChecked():
                     self.grid_params['criterion'] = ['gini', 'entropy']
             else:
-                self.grid_params = {'max_depth': [110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310],
+                self.grid_params = {'max_depth': [30, 50, 70, 90, 110, 130, 150, 170],
                                     'criterion': ['gini', 'entropy'],
-                                    'max_leaf_nodes': [110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310]}
+                                    'max_leaf_nodes': [30, 50, 70, 90, 110, 130, 150, 170]}
         except Exception:
             self.error_popup("Make Sure You Have entered number in correct format!")
             return
