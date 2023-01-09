@@ -12,9 +12,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 import random
 import threading
-
-from samples import *
-# from sources.samples import *
+from sources.samples import *
 
 
 def resource_path(relative_path):
